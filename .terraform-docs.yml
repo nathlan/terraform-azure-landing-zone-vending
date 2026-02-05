@@ -1,0 +1,15 @@
+formatter: "markdown table"
+output:
+  file: README.md
+  mode: inject
+# Recursive is disabled by default - modules with submodules should enable it
+# by creating a custom .terraform-docs.yml in the module root that includes:
+# recursive:
+#   enabled: true
+#   path: modules
+settings:
+  anchor: true
+  default: true
+  escape: false
+  indent: 2
+  required: true
