@@ -1,0 +1,27 @@
+name: Release on Merge
+
+on:
+  push:
+    branches:
+      - main
+
+permissions:
+  contents: write
+  pull-requests: read
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Release on merge
+        uses: ridedott/release-me-action@master
+        with:
+          release-branches: '["main"]'
+          node-module: false
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
