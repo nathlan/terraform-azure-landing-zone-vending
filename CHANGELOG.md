@@ -1,3 +1,14 @@
+## [1.0.1](https://github.com/nathlan/terraform-azurerm-landing-zone-vending/compare/v1.0.0...v1.0.1) (2026-02-05)
+
+### Bug Fixes
+
+- Remove invalid azurerm_resource_tag rule from TFLint config ([bcea90e](https://github.com/nathlan/terraform-azurerm-landing-zone-vending/commit/bcea90e3cf1af714a96ca1f804660bd95675cb6e)), closes [#3](https://github.com/nathlan/terraform-azurerm-landing-zone-vending/issues/3) [#2](https://github.com/nathlan/terraform-azurerm-landing-zone-vending/issues/2)
+- Standardize Checkov configuration and file extension ([eda110e](https://github.com/nathlan/terraform-azurerm-landing-zone-vending/commit/eda110e5090cc308c8ebca8710181410b87aa083))
+
+### Other
+
+- Merge pull request #2 from nathlan/fix/update-validation-configs ([b004693](https://github.com/nathlan/terraform-azurerm-landing-zone-vending/commit/b004693cd47165f6d00c36b33454b45ad0cafa85)), closes [#2](https://github.com/nathlan/terraform-azurerm-landing-zone-vending/issues/2)
+
 # 1.0.0 (2026-02-05)
 
 ### Documentation
