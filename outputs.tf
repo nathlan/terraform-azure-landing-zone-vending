@@ -27,3 +27,30 @@ output "management_group_subscription_association_id" {
   description = "The ID of the management group subscription association."
   value       = module.landing_zone_vending.management_group_subscription_association_id
 }
+
+# User-Managed Identity outputs
+output "umi_client_ids" {
+  description = "The client IDs of the user-managed identities. Value will be null if var.umi_enabled is false."
+  value       = module.landing_zone_vending.umi_client_ids
+}
+
+output "umi_principal_ids" {
+  description = "The principal IDs (object IDs) of the user-managed identities. Value will be null if var.umi_enabled is false."
+  value       = module.landing_zone_vending.umi_principal_ids
+}
+
+output "umi_resource_ids" {
+  description = "The Azure resource IDs of the user-managed identities. Value will be null if var.umi_enabled is false."
+  value       = module.landing_zone_vending.umi_resource_ids
+}
+
+output "umi_tenant_ids" {
+  description = "The tenant IDs of the user-managed identities. Value will be null if var.umi_enabled is false."
+  value       = module.landing_zone_vending.umi_tenant_ids
+}
+
+# Budget outputs
+output "budget_resource_ids" {
+  description = "The created budget resource IDs, expressed as a map."
+  value       = module.landing_zone_vending.budget_resource_id
+}
