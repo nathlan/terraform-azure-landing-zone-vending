@@ -30,6 +30,14 @@ module "landing_zone_vending" {
   virtual_network_enabled = var.virtual_network_enabled
   virtual_networks        = var.virtual_networks
 
+  # User-Managed Identities
+  umi_enabled             = var.umi_enabled
+  user_managed_identities = var.user_managed_identities
+
+  # Budgets
+  budget_enabled = var.budget_enabled
+  budgets        = var.budgets
+
   # Telemetry
   enable_telemetry = var.enable_telemetry
 }

@@ -121,6 +121,123 @@ variable "virtual_networks" {
   default     = {}
 }
 
+# User-Managed Identity configuration
+variable "umi_enabled" {
+  type        = bool
+  description = "Whether to enable the creation of user-assigned managed identities. Requires user_managed_identities to be configured."
+  default     = false
+}
+
+variable "user_managed_identities" {
+  type = map(object({
+    name                         = string
+    resource_group_key           = optional(string)
+    resource_group_name_existing = optional(string)
+    location                     = optional(string)
+    tags                         = optional(map(string), {})
+    role_assignments = optional(map(object({
+      definition                = string
+      relative_scope            = optional(string, "")
+      resource_group_scope_key  = optional(string)
+      condition                 = optional(string)
+      condition_version         = optional(string)
+      principal_type            = optional(string)
+      definition_lookup_enabled = optional(bool, false)
+      use_random_uuid           = optional(bool, false)
+    })), {})
+    federated_credentials_github = optional(map(object({
+      name            = optional(string)
+      organization    = string
+      repository      = string
+      entity          = string
+      enterprise_slug = optional(string)
+      value           = optional(string)
+    })), {})
+    federated_credentials_terraform_cloud = optional(map(object({
+      name         = optional(string)
+      organization = string
+      project      = string
+      workspace    = string
+      run_phase    = string
+    })), {})
+    federated_credentials_advanced = optional(map(object({
+      name               = string
+      subject_identifier = string
+      issuer_url         = string
+      audiences          = optional(set(string), ["api://AzureADTokenExchange"])
+    })), {})
+  }))
+  description = <<-EOT
+    Map of user-managed identities to create. The map key must be known at plan time.
+
+    Required fields:
+    - name: The name of the user-assigned managed identity
+    - One of resource_group_key (for RGs created in this module) or resource_group_name_existing (for existing RGs)
+
+    Optional fields:
+    - location: Location of the identity (defaults to module location)
+    - tags: Tags to apply to the identity
+    - role_assignments: Role assignments for the identity
+    - federated_credentials_github: GitHub OIDC federated credentials
+    - federated_credentials_terraform_cloud: Terraform Cloud federated credentials
+    - federated_credentials_advanced: Advanced federated credentials configuration
+  EOT
+  default     = {}
+}
+
+# Budget configuration
+variable "budget_enabled" {
+  type        = bool
+  description = "Whether to create budgets. If enabled, supply the list of budgets in var.budgets."
+  default     = false
+}
+
+variable "budgets" {
+  type = map(object({
+    name               = string
+    amount             = number
+    time_grain         = string
+    time_period_start  = string
+    time_period_end    = string
+    relative_scope     = optional(string, "")
+    resource_group_key = optional(string)
+    notifications = optional(map(object({
+      enabled        = bool
+      operator       = string
+      threshold      = number
+      threshold_type = optional(string, "Actual")
+      contact_emails = optional(list(string), [])
+      contact_roles  = optional(list(string), [])
+      contact_groups = optional(list(string), [])
+      locale         = optional(string, "en-us")
+    })), {})
+  }))
+  description = <<-EOT
+    Map of budgets to create for the subscription.
+
+    Required fields:
+    - name: The name of the budget
+    - amount: The total amount of cost to track with the budget
+    - time_grain: The time grain for the budget (Annually, BillingAnnual, BillingMonth, BillingQuarter, Monthly, or Quarterly)
+    - time_period_start: The start date for the budget (RFC3339 format, e.g. 2024-01-01T00:00:00Z)
+    - time_period_end: The end date for the budget (RFC3339 format)
+
+    Optional fields:
+    - relative_scope: Scope relative to the created subscription (empty for subscription scope)
+    - resource_group_key: Key of the resource group (if created in this module)
+    - notifications: Map of notifications with:
+      - enabled: Whether the notification is enabled
+      - operator: The operator (GreaterThan or GreaterThanOrEqualTo)
+      - threshold: The threshold (0-1000)
+      - threshold_type: Actual or Forecasted
+      - contact_emails: List of contact emails
+      - contact_roles: List of contact roles
+      - contact_groups: List of contact groups
+      - locale: The locale (e.g. en-us)
+  EOT
+  default     = {}
+}
+
 # Telemetry configuration
 variable "enable_telemetry" {
   type        = bool
