@@ -1,18 +1,26 @@
 # Example: Basic Landing Zone Vending
 #
-# This example demonstrates using variables with a terraform.tfvars file.
+# This example demonstrates deploying MULTIPLE landing zones in a SINGLE module call
+# using variables with a terraform.tfvars file.
+#
+# The terraform.tfvars.example file shows how to define multiple landing zones
+# (example-api-prod and example-web-dev) in the landing_zones map variable.
+#
 # Copy terraform.tfvars.example to terraform.tfvars and customize values.
 
 module "landing_zones" {
   source = "../.."
 
+  # Common configuration shared across all landing zones
   subscription_billing_scope       = var.subscription_billing_scope
   subscription_management_group_id = var.subscription_management_group_id
   hub_network_resource_id          = var.hub_network_resource_id
   github_organization              = var.github_organization
   base_address_space               = var.base_address_space
   tags                             = var.tags
-  landing_zones                    = var.landing_zones
+
+  # Map of multiple landing zones to deploy in this single module call
+  landing_zones = var.landing_zones
 }
 
 # Outputs

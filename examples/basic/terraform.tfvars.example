@@ -16,6 +16,9 @@ tags = {
 # ========================================
 # Landing Zones Configuration
 # ========================================
+#
+# Define MULTIPLE landing zones to deploy in a single module call.
+# Each key (e.g., "example-api-prod") represents a separate landing zone.
 
 landing_zones = {
   example-api-prod = {
