@@ -65,7 +65,7 @@ variable "landing_zones" {
     # Optional: Networking Configuration
     dns_servers = optional(list(string), [])
     spoke_vnet = optional(object({
-      ipv4_address_space = map(object({
+      ipv4_address_spaces = map(object({
         address_space_cidr = string
         subnets = map(object({
           subnet_prefixes = list(string)
@@ -100,7 +100,7 @@ variable "landing_zones" {
     - subscription_tags: Additional tags for the subscription (merged with auto-generated tags)
     - dns_servers: Custom DNS servers for VNet
     - spoke_vnet: Spoke VNet configuration with nested address spaces and subnets (omit to skip VNet creation)
-      - ipv4_address_space: Map of address spaces, each with:
+      - ipv4_address_spaces: Map of address spaces, each with:
         - address_space_cidr: Prefix size (e.g., '/24')
         - subnets: Map of subnets, each with:
           - subnet_prefixes: List of subnet prefix sizes (e.g., ['/26', '/28'])
@@ -115,7 +115,7 @@ variable "landing_zones" {
         team     = "app-engineering"
         location = "australiaeast"
         spoke_vnet = {
-          ipv4_address_space = {
+          ipv4_address_spaces = {
             default_address_space = {
               address_space_cidr = "/23"
               subnets = {
@@ -146,7 +146,7 @@ variable "landing_zones" {
   validation {
     condition = alltrue(flatten([
       for lz_key, lz in var.landing_zones : [
-        for as_key, as in try(lz.spoke_vnet.ipv4_address_space, {}) :
+        for as_key, as in try(lz.spoke_vnet.ipv4_address_spaces, {}) :
         can(regex("^/[0-9]{1,2}$", as.address_space_cidr))
       ]
     ]))
@@ -156,7 +156,7 @@ variable "landing_zones" {
   validation {
     condition = alltrue(flatten([
       for lz_key, lz in var.landing_zones : [
-        for as_key, as in try(lz.spoke_vnet.ipv4_address_space, {}) : [
+        for as_key, as in try(lz.spoke_vnet.ipv4_address_spaces, {}) : [
           for subnet_key, subnet in as.subnets : [
             for prefix in subnet.subnet_prefixes :
             can(regex("^/[0-9]{1,2}$", prefix))

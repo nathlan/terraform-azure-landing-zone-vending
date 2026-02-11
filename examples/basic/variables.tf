@@ -49,7 +49,7 @@ variable "landing_zones" {
     subscription_tags            = optional(map(string), {})
     dns_servers                  = optional(list(string), [])
     spoke_vnet = optional(object({
-      ipv4_address_space = map(object({
+      ipv4_address_spaces = map(object({
         address_space_cidr = string
         subnets = map(object({
           subnet_prefixes = list(string)
