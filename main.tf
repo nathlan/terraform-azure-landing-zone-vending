@@ -77,7 +77,7 @@ locals {
   # Flatten all address spaces from all landing zones into a single map
   vnet_prefix_sizes = merge([
     for lz_key, lz in var.landing_zones : {
-      for as_key, as in try(lz.spoke_vnet.ipv4_address_space, {}) :
+      for as_key, as in try(lz.spoke_vnet.ipv4_address_spaces, {}) :
       "${lz_key}_${as_key}" => tonumber(trimprefix(as.address_space_cidr, "/"))
     }
   ]...)
@@ -124,7 +124,7 @@ locals {
   # Hub peering is always enabled when hub_network_resource_id is provided
   virtual_networks = merge([
     for lz_key, lz in var.landing_zones : {
-      for as_key, as in try(lz.spoke_vnet.ipv4_address_space, {}) :
+      for as_key, as in try(lz.spoke_vnet.ipv4_address_spaces, {}) :
       "${lz_key}_${as_key}" => {
         name                    = "${module.naming[lz_key].virtual_network.name}-${as_key}"
         resource_group_key      = "rg_network"
@@ -188,7 +188,7 @@ module "landing_zone_vending" {
 
   virtual_network_enabled = each.value.spoke_vnet != null
   virtual_networks = each.value.spoke_vnet != null ? {
-    for as_key, as in each.value.spoke_vnet.ipv4_address_space :
+    for as_key, as in each.value.spoke_vnet.ipv4_address_spaces :
     as_key => local.virtual_networks["${each.key}_${as_key}"]
   } : {}
 
