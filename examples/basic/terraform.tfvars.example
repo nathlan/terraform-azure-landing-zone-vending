@@ -1,0 +1,107 @@
+# ========================================
+# Common Configuration
+# ========================================
+
+subscription_billing_scope       = "YOUR_BILLING_SCOPE_HERE"
+subscription_management_group_id = "Corp"
+hub_network_resource_id          = "/subscriptions/xxx/resourceGroups/rg-hub/providers/Microsoft.Network/virtualNetworks/vnet-hub"
+github_organization              = "yourorg"
+azure_address_space              = "10.100.0.0/16"
+
+tags = {
+  managed_by       = "terraform"
+  environment_type = "example"
+}
+
+# ========================================
+# Landing Zones Configuration
+# ========================================
+#
+# Define MULTIPLE landing zones to deploy in a single module call.
+# Each key (e.g., "example-api-prod") represents a separate landing zone.
+
+landing_zones = {
+  example-api-prod = {
+    workload = "example-api"
+    env      = "prod"
+    team     = "app-engineering"
+    location = "australiaeast"
+
+    subscription_tags = {
+      cost_centre = "IT-DEV-002"
+      criticality = "high"
+    }
+
+    # New nested spoke_vnet structure with multiple address spaces
+    spoke_vnet = {
+      ipv4_address_space = {
+        default_address_space = {
+          address_space_cidr = "/23"
+          subnets = {
+            workload = {
+              subnet_prefixes = ["/27", "/26"]
+            }
+            database = {
+              subnet_prefixes = ["/28"]
+            }
+          }
+        }
+        secondary_address_space = {
+          address_space_cidr = "/24"
+          subnets = {
+            api = {
+              subnet_prefixes = ["/25"]
+            }
+          }
+        }
+      }
+    }
+
+    # Budget with new field names
+    budget = {
+      monthly_amount             = 500
+      alert_threshold_percentage = 80
+      alert_contact_emails       = ["team@example.com"]
+    }
+
+    federated_credentials_github = {
+      repository = "example-api-prod"
+    }
+  }
+
+  example-web-dev = {
+    workload = "example-web"
+    env      = "dev"
+    team     = "web-engineering"
+    location = "australiacentral"
+
+    subscription_devtest_enabled = true
+    subscription_tags = {
+      cost_centre = "IT-DEV-001"
+    }
+
+    # Simpler spoke_vnet with single address space
+    spoke_vnet = {
+      ipv4_address_space = {
+        default_address_space = {
+          address_space_cidr = "/25"
+          subnets = {
+            default = {
+              subnet_prefixes = ["/27"]
+            }
+          }
+        }
+      }
+    }
+
+    budget = {
+      monthly_amount             = 100
+      alert_threshold_percentage = 90
+      alert_contact_emails       = ["web-team@example.com"]
+    }
+
+    federated_credentials_github = {
+      repository = "example-web-dev"
+    }
+  }
+}

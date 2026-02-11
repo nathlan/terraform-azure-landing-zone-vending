@@ -2,7 +2,8 @@ name: Release on Merge
 
 on:
   push:
-    branches: [main]
+    branches:
+      - main
 
 permissions:
   contents: write
@@ -11,9 +12,14 @@ jobs:
   release:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout code
+        uses: actions/checkout@v4
         with:
           fetch-depth: 0
-      - uses: dexwritescode/release-on-merge-action@v1
+
+      - name: Release on merge
+        uses: dexwritescode/release-on-merge-action@v1
+        with:
+          initial-version: '3.0.0'
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
