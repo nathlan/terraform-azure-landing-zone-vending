@@ -1,15 +1,6 @@
 # Azure Landing Zone Vending Module
 
-Terraform module for Azure Landing Zone subscription vending with Azure Verified Modules (AVM) integration, Azure naming conventions, and smart defaults.
-
-## Features
-
-- **Azure Naming Module Integration**: Automatic resource naming following Azure best practices
-- **Time Provider**: Idempotent budget timestamps using HashiCorp time provider
-- **Smart Defaults**: 70% code reduction with sensible defaults for all features
-- **Landing Zones Map**: Manage multiple landing zones in a single module call
-- **IP Address Automation**: Automatic VNet address space calculation
-- **Subnet Support**: Create subnets with automatic CIDR calculation
+Terraform module for Azure Landing Zone subscription vending with Azure Verified Modules (AVM) integration, automatic naming, and smart defaults.
 
 ## Usage
 
@@ -18,15 +9,10 @@ module "landing_zones" {
   source  = "nathlan/landing-zone-vending/azurerm"
   version = "~> 3.0"
 
-  subscription_billing_scope         = "YOUR_BILLING_SCOPE"
-  subscription_management_group_id   = "Corp"
-  hub_network_resource_id            = "/subscriptions/xxx/resourceGroups/rg-hub/providers/Microsoft.Network/virtualNetworks/vnet-hub"
-  github_organization                = "yourorg"
-  base_address_space                 = "10.100.0.0/16"
-
-  tags = {
-    managed_by = "terraform"
-  }
+  subscription_billing_scope       = "YOUR_BILLING_SCOPE"
+  subscription_management_group_id = "Corp"
+  hub_network_resource_id          = "/subscriptions/xxx/resourceGroups/rg-hub/providers/Microsoft.Network/virtualNetworks/vnet-hub"
+  azure_address_space              = "10.100.0.0/16"
 
   landing_zones = {
     example-api-prod = {
@@ -34,43 +20,10 @@ module "landing_zones" {
       env      = "prod"
       team     = "app-engineering"
       location = "australiaeast"
-
-      address_space_required = "/24"
-      subnets = {
-        default = { subnet_prefix = "/26" }
-        api     = { subnet_prefix = "/28" }
-      }
-
-      budgets = {
-        amount         = 500
-        threshold      = 80
-        contact_emails = ["team@example.com"]
-      }
-
-      federated_credentials_github = {
-        repository = "example-api-prod"
-      }
     }
   }
 }
 ```
-
-## Examples
-
-- [Basic example](./examples/basic) - Complete landing zone with VNet, budget, and federated credentials
-
-## Breaking Changes in v3.0.0
-
-This is a MAJOR version with breaking changes. Key changes:
-
-- New `landing_zones` map variable structure
-- Time provider required in `versions.tf`
-- Auto-generated resource names (cannot override)
-- Environment validation enforced (dev/test/prod only)
-- Removed individual feature enable flags
-- Simplified budget configuration
-
-See [CHANGELOG.md](./CHANGELOG.md) for migration guide.
 
 <!-- BEGIN_TF_DOCS -->
 ## Requirements
