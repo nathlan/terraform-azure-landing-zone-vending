@@ -54,3 +54,21 @@ output "budget_resource_ids" {
   description = "The created budget resource IDs, expressed as a map."
   value       = module.landing_zone_vending.budget_resource_id
 }
+
+# IP Address Automation outputs
+output "calculated_address_prefixes" {
+  description = "The automatically calculated address prefixes for virtual networks when ip_address_automation_enabled is true. Returns null if automation is disabled."
+  value       = var.ip_address_automation_enabled ? module.ip_addresses[0].address_prefixes : null
+}
+
+output "calculated_address_prefixes_with_details" {
+  description = "The automatically calculated address prefixes with details when ip_address_automation_enabled is true. Returns null if automation is disabled."
+  value       = var.ip_address_automation_enabled ? module.ip_addresses[0].address_prefixes_with_details : null
+}
+
+output "virtual_networks_address_spaces" {
+  description = "Map of virtual network keys to their final address spaces (either calculated or explicitly provided)."
+  value = {
+    for key, vnet in local.virtual_networks_with_addresses : key => vnet.address_space
+  }
+}

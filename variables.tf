@@ -97,6 +97,46 @@ variable "role_assignments" {
   default     = {}
 }
 
+# IP Address Automation configuration
+variable "ip_address_automation_enabled" {
+  type        = bool
+  description = "Enable automatic IP address space calculation for virtual networks. When enabled, address spaces will be automatically calculated from the base address space unless explicitly provided in virtual_networks."
+  default     = false
+}
+
+variable "ip_address_automation_address_space" {
+  type        = string
+  description = "The base address space to use for automatic IP address calculation in CIDR notation (e.g., '10.100.0.0/16'). Only used when ip_address_automation_enabled is true."
+  default     = null
+
+  validation {
+    condition     = var.ip_address_automation_address_space == null || can(regex("^([0-9]{1,3}\\.){3}[0-9]{1,3}/[0-9]{1,2}$", var.ip_address_automation_address_space))
+    error_message = "ip_address_automation_address_space must be a valid CIDR notation (e.g., '10.100.0.0/16')."
+  }
+}
+
+variable "ip_address_automation_vnet_prefix_sizes" {
+  type        = map(number)
+  description = <<-EOT
+    Map of virtual network keys to their desired prefix sizes for automatic IP address calculation.
+    The keys must match the keys in var.virtual_networks. The values are the CIDR prefix lengths (e.g., 24 for /24).
+    Only used when ip_address_automation_enabled is true.
+
+    Example:
+    {
+      "vnet1" = 24  # /24 = 256 addresses
+      "vnet2" = 26  # /26 = 64 addresses
+      "vnet3" = 25  # /25 = 128 addresses
+    }
+  EOT
+  default     = {}
+
+  validation {
+    condition     = alltrue([for size in values(var.ip_address_automation_vnet_prefix_sizes) : size >= 8 && size <= 30])
+    error_message = "All prefix sizes must be between 8 and 30."
+  }
+}
+
 # Virtual network configuration
 variable "virtual_network_enabled" {
   type        = bool
@@ -107,7 +147,7 @@ variable "virtual_network_enabled" {
 variable "virtual_networks" {
   type = map(object({
     name                    = string
-    address_space           = list(string)
+    address_space           = optional(list(string))
     resource_group_key      = string
     location                = optional(string)
     dns_servers             = optional(list(string), [])
@@ -117,7 +157,16 @@ variable "virtual_networks" {
     mesh_peering_enabled    = optional(bool, false)
     tags                    = optional(map(string), {})
   }))
-  description = "Map of virtual networks to create."
+  description = <<-EOT
+    Map of virtual networks to create.
+
+    When ip_address_automation_enabled is true:
+    - address_space is optional and will be automatically calculated if not provided
+    - The map keys must match the keys in var.ip_address_automation_vnet_prefix_sizes for automatic calculation
+
+    When ip_address_automation_enabled is false:
+    - address_space is required
+  EOT
   default     = {}
 }
 
