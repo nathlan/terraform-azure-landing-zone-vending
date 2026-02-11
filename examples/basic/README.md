@@ -13,11 +13,18 @@ This example demonstrates a complete landing zone setup with:
 
 ## Usage
 
-```bash
-terraform init
-terraform plan
-terraform apply
-```
+1. Copy the example tfvars file and customize with your values:
+   ```bash
+   cp terraform.tfvars.example terraform.tfvars
+   # Edit terraform.tfvars with your specific values
+   ```
+
+2. Initialize and apply:
+   ```bash
+   terraform init
+   terraform plan
+   terraform apply
+   ```
 
 ## Outputs
 

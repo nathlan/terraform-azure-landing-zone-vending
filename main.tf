@@ -210,8 +210,8 @@ module "landing_zone_vending" {
         plan = {
           organization = var.github_organization
           repository   = each.value.federated_credentials_github.repository
-          entity       = "environment"
-          value        = "plan"
+          entity       = "pull_request"
+          value        = ""
         }
       } : {}
     }
@@ -233,8 +233,8 @@ module "landing_zone_vending" {
         deploy = {
           organization = var.github_organization
           repository   = each.value.federated_credentials_github.repository
-          entity       = "environment"
-          value        = "deploy"
+          entity       = "branch"
+          value        = "main"
         }
       } : {}
     }
