@@ -24,13 +24,13 @@ variable "github_organization" {
   default     = null
 }
 
-variable "base_address_space" {
+variable "azure_address_space" {
   type        = string
   description = "The base address space to use for IP address automation in CIDR notation (e.g., '10.100.0.0/16'). Required for automatic address space calculation."
 
   validation {
-    condition     = can(regex("^([0-9]{1,3}\\.){3}[0-9]{1,3}/[0-9]{1,2}$", var.base_address_space))
-    error_message = "base_address_space must be a valid CIDR notation (e.g., '10.100.0.0/16')."
+    condition     = can(regex("^([0-9]{1,3}\\.){3}[0-9]{1,3}/[0-9]{1,2}$", var.azure_address_space))
+    error_message = "azure_address_space must be a valid CIDR notation (e.g., '10.100.0.0/16')."
   }
 }
 
@@ -72,10 +72,10 @@ variable "landing_zones" {
     })), {})
 
     # Optional: Budget Configuration
-    budgets = optional(object({
-      amount         = number
-      threshold      = number
-      contact_emails = list(string)
+    budget = optional(object({
+      monthly_amount                = number
+      alert_threshold_percentage    = number
+      alert_contact_emails          = list(string)
     }))
 
     # Optional: Federated Credentials
@@ -100,7 +100,7 @@ variable "landing_zones" {
     - hub_peering_enabled: Enable peering to hub VNet (default: true)
     - dns_servers: Custom DNS servers for VNet
     - subnets: Map of subnets with subnet_prefix (e.g., '/26')
-    - budgets: Budget configuration with amount, threshold, and contact_emails
+    - budget: Budget configuration with monthly_amount, alert_threshold_percentage, and alert_contact_emails
     - federated_credentials_github: GitHub OIDC config with repository name
 
     Example:
@@ -115,9 +115,9 @@ variable "landing_zones" {
           default = { subnet_prefix = "/26" }
         }
         budgets = {
-          amount         = 500
-          threshold      = 80
-          contact_emails = ["team@example.com"]
+          monthly_amount             = 500
+          alert_threshold_percentage = 80
+          alert_contact_emails       = ["team@example.com"]
         }
       }
     }

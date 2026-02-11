@@ -16,7 +16,7 @@ module "landing_zones" {
   subscription_management_group_id = var.subscription_management_group_id
   hub_network_resource_id          = var.hub_network_resource_id
   github_organization              = var.github_organization
-  base_address_space               = var.base_address_space
+  azure_address_space              = var.azure_address_space
   tags                             = var.tags
 
   # Map of multiple landing zones to deploy in this single module call

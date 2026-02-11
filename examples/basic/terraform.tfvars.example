@@ -6,7 +6,7 @@ subscription_billing_scope       = "YOUR_BILLING_SCOPE_HERE"
 subscription_management_group_id = "Corp"
 hub_network_resource_id          = "/subscriptions/xxx/resourceGroups/rg-hub/providers/Microsoft.Network/virtualNetworks/vnet-hub"
 github_organization              = "yourorg"
-base_address_space               = "10.100.0.0/16"
+azure_address_space               = "10.100.0.0/16"
 
 tags = {
   managed_by       = "terraform"

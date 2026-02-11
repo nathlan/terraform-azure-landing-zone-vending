@@ -52,7 +52,7 @@ resource "time_static" "budget" {
   for_each = {
     for lz_key, lz in var.landing_zones :
     lz_key => lz
-    if lz.budgets != null
+    if lz.budget != null
   }
 }
 
@@ -86,7 +86,7 @@ module "ip_addresses" {
   source  = "Azure/avm-utl-network-ip-addresses/azurerm"
   version = "~> 0.1.0"
 
-  address_space                 = var.base_address_space
+  address_space                 = var.azure_address_space
   address_prefixes              = local.vnet_prefix_sizes
   address_prefix_efficient_mode = true
   enable_telemetry              = var.enable_telemetry

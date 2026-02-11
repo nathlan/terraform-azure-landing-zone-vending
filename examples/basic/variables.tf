@@ -24,7 +24,7 @@ variable "github_organization" {
   default     = null
 }
 
-variable "base_address_space" {
+variable "azure_address_space" {
   type        = string
   description = "The base address space to use for IP address automation in CIDR notation."
 }
