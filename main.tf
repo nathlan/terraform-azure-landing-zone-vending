@@ -60,7 +60,7 @@ resource "time_offset" "budget_end" {
   for_each = {
     for lz_key, lz in var.landing_zones :
     lz_key => lz
-    if lz.budgets != null
+    if lz.budget != null
   }
 
   base_rfc3339  = time_static.budget[each.key].rfc3339
@@ -72,12 +72,15 @@ resource "time_offset" "budget_end" {
 # ========================================
 
 # Calculate prefix sizes for VNets from landing zones
+# For each landing zone with spoke_vnet, calculate all address space prefixes
 locals {
-  vnet_prefix_sizes = {
-    for lz_key, lz in var.landing_zones :
-    lz_key => tonumber(trimprefix(lz.address_space_required, "/"))
-    if lz.address_space_required != null
-  }
+  # Flatten all address spaces from all landing zones into a single map
+  vnet_prefix_sizes = merge([
+    for lz_key, lz in var.landing_zones : {
+      for as_key, as in try(lz.spoke_vnet.ipv4_address_space, {}) :
+      "${lz_key}_${as_key}" => tonumber(trimprefix(as.address_space_cidr, "/"))
+    }
+  ]...)
 }
 
 module "ip_addresses" {
@@ -118,22 +121,23 @@ locals {
   }
 
   # Virtual network configurations with calculated address spaces
-  virtual_networks = {
-    for lz_key, lz in var.landing_zones :
-    lz_key => lz.address_space_required != null ? {
-      name                    = module.naming[lz_key].virtual_network.name
-      resource_group_key      = "rg_network"
-      location                = lz.location
-      address_space           = length(local.vnet_prefix_sizes) > 0 ? [module.ip_addresses[0].address_prefixes[lz_key]] : []
-      dns_servers             = lz.dns_servers
-      hub_network_resource_id = var.hub_network_resource_id
-      hub_peering_enabled     = var.hub_network_resource_id != null ? lz.hub_peering_enabled : false
-      mesh_peering_enabled    = false
-      tags                    = local.merged_tags[lz_key]
-      # Subnets will be added by AVM module
-    } : null
-    if lz.address_space_required != null
-  }
+  # Hub peering is always enabled when hub_network_resource_id is provided
+  virtual_networks = merge([
+    for lz_key, lz in var.landing_zones : {
+      for as_key, as in try(lz.spoke_vnet.ipv4_address_space, {}) :
+      "${lz_key}_${as_key}" => {
+        name                    = "${module.naming[lz_key].virtual_network.name}-${as_key}"
+        resource_group_key      = "rg_network"
+        location                = lz.location
+        address_space           = length(local.vnet_prefix_sizes) > 0 ? [module.ip_addresses[0].address_prefixes["${lz_key}_${as_key}"]] : []
+        dns_servers             = lz.dns_servers
+        hub_network_resource_id = var.hub_network_resource_id
+        hub_peering_enabled     = var.hub_network_resource_id != null
+        mesh_peering_enabled    = false
+        tags                    = local.merged_tags[lz_key]
+      }
+    }
+  ]...)
 }
 
 # ========================================
@@ -182,9 +186,10 @@ module "landing_zone_vending" {
   # Virtual Networks (Conditional)
   # ========================================
 
-  virtual_network_enabled = each.value.address_space_required != null
-  virtual_networks = each.value.address_space_required != null ? {
-    spoke = local.virtual_networks[each.key]
+  virtual_network_enabled = each.value.spoke_vnet != null
+  virtual_networks = each.value.spoke_vnet != null ? {
+    for as_key, as in each.value.spoke_vnet.ipv4_address_space :
+    as_key => local.virtual_networks["${each.key}_${as_key}"]
   } : {}
 
   # ========================================
@@ -244,11 +249,11 @@ module "landing_zone_vending" {
   # Budgets (Conditional)
   # ========================================
 
-  budget_enabled = each.value.budgets != null
-  budgets = each.value.budgets != null ? {
+  budget_enabled = each.value.budget != null
+  budgets = each.value.budget != null ? {
     monthly = {
       name              = "${local.resource_abbreviations.budget}-${each.value.workload}-${each.value.env}"
-      amount            = each.value.budgets.amount
+      amount            = each.value.budget.monthly_amount
       time_grain        = "Monthly"
       time_period_start = time_static.budget[each.key].rfc3339
       time_period_end   = time_offset.budget_end[each.key].rfc3339
@@ -258,9 +263,9 @@ module "landing_zone_vending" {
         threshold = {
           enabled        = true
           operator       = "GreaterThan"
-          threshold      = each.value.budgets.threshold
+          threshold      = each.value.budget.alert_threshold_percentage
           threshold_type = "Actual"
-          contact_emails = each.value.budgets.contact_emails
+          contact_emails = each.value.budget.alert_contact_emails
           contact_roles  = []
           contact_groups = []
           locale         = "en-us"

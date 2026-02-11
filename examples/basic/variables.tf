@@ -47,17 +47,19 @@ variable "landing_zones" {
     location                     = string
     subscription_devtest_enabled = optional(bool, false)
     subscription_tags            = optional(map(string), {})
-    address_space_required       = optional(string)
-    hub_peering_enabled          = optional(bool, true)
     dns_servers                  = optional(list(string), [])
-    subnets = optional(map(object({
-      name          = optional(string)
-      subnet_prefix = string
-    })), {})
-    budgets = optional(object({
-      amount         = number
-      threshold      = number
-      contact_emails = list(string)
+    spoke_vnet = optional(object({
+      ipv4_address_space = map(object({
+        address_space_cidr = string
+        subnets = map(object({
+          subnet_prefixes = list(string)
+        }))
+      }))
+    }))
+    budget = optional(object({
+      monthly_amount             = number
+      alert_threshold_percentage = number
+      alert_contact_emails       = list(string)
     }))
     federated_credentials_github = optional(object({
       repository = string
