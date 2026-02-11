@@ -24,13 +24,13 @@ variable "github_organization" {
   default     = null
 }
 
-variable "base_address_space" {
+variable "azure_address_space" {
   type        = string
   description = "The base address space to use for IP address automation in CIDR notation (e.g., '10.100.0.0/16'). Required for automatic address space calculation."
 
   validation {
-    condition     = can(regex("^([0-9]{1,3}\\.){3}[0-9]{1,3}/[0-9]{1,2}$", var.base_address_space))
-    error_message = "base_address_space must be a valid CIDR notation (e.g., '10.100.0.0/16')."
+    condition     = can(regex("^([0-9]{1,3}\\.){3}[0-9]{1,3}/[0-9]{1,2}$", var.azure_address_space))
+    error_message = "azure_address_space must be a valid CIDR notation (e.g., '10.100.0.0/16')."
   }
 }
 
@@ -63,19 +63,21 @@ variable "landing_zones" {
     subscription_tags            = optional(map(string), {})
 
     # Optional: Networking Configuration
-    address_space_required = optional(string)
-    hub_peering_enabled    = optional(bool, true)
-    dns_servers            = optional(list(string), [])
-    subnets = optional(map(object({
-      name          = optional(string)
-      subnet_prefix = string
-    })), {})
+    dns_servers = optional(list(string), [])
+    spoke_vnet = optional(object({
+      ipv4_address_space = map(object({
+        address_space_cidr = string
+        subnets = map(object({
+          subnet_prefixes = list(string)
+        }))
+      }))
+    }))
 
     # Optional: Budget Configuration
-    budgets = optional(object({
-      amount         = number
-      threshold      = number
-      contact_emails = list(string)
+    budget = optional(object({
+      monthly_amount             = number
+      alert_threshold_percentage = number
+      alert_contact_emails       = list(string)
     }))
 
     # Optional: Federated Credentials
@@ -96,11 +98,13 @@ variable "landing_zones" {
     Optional fields:
     - subscription_devtest_enabled: Create as DevTest subscription (default: false = Production)
     - subscription_tags: Additional tags for the subscription (merged with auto-generated tags)
-    - address_space_required: VNet prefix size (e.g., '/24') - omit to skip VNet creation
-    - hub_peering_enabled: Enable peering to hub VNet (default: true)
     - dns_servers: Custom DNS servers for VNet
-    - subnets: Map of subnets with subnet_prefix (e.g., '/26')
-    - budgets: Budget configuration with amount, threshold, and contact_emails
+    - spoke_vnet: Spoke VNet configuration with nested address spaces and subnets (omit to skip VNet creation)
+      - ipv4_address_space: Map of address spaces, each with:
+        - address_space_cidr: Prefix size (e.g., '/24')
+        - subnets: Map of subnets, each with:
+          - subnet_prefixes: List of subnet prefix sizes (e.g., ['/26', '/28'])
+    - budget: Budget configuration with monthly_amount, alert_threshold_percentage, and alert_contact_emails
     - federated_credentials_github: GitHub OIDC config with repository name
 
     Example:
@@ -110,14 +114,22 @@ variable "landing_zones" {
         env      = "prod"
         team     = "app-engineering"
         location = "australiaeast"
-        address_space_required = "/24"
-        subnets = {
-          default = { subnet_prefix = "/26" }
+        spoke_vnet = {
+          ipv4_address_space = {
+            default_address_space = {
+              address_space_cidr = "/23"
+              subnets = {
+                workload = {
+                  subnet_prefixes = ["/27", "/26"]
+                }
+              }
+            }
+          }
         }
-        budgets = {
-          amount         = 500
-          threshold      = 80
-          contact_emails = ["team@example.com"]
+        budget = {
+          monthly_amount             = 500
+          alert_threshold_percentage = 80
+          alert_contact_emails       = ["team@example.com"]
         }
       }
     }
@@ -132,10 +144,26 @@ variable "landing_zones" {
   }
 
   validation {
-    condition = alltrue([
-      for lz_key, lz in var.landing_zones :
-      lz.address_space_required == null || can(regex("^/[0-9]{1,2}$", lz.address_space_required))
-    ])
-    error_message = "address_space_required must be in format '/XX' (e.g., '/24')."
+    condition = alltrue(flatten([
+      for lz_key, lz in var.landing_zones : [
+        for as_key, as in try(lz.spoke_vnet.ipv4_address_space, {}) :
+        can(regex("^/[0-9]{1,2}$", as.address_space_cidr))
+      ]
+    ]))
+    error_message = "address_space_cidr must be in format '/XX' (e.g., '/24')."
+  }
+
+  validation {
+    condition = alltrue(flatten([
+      for lz_key, lz in var.landing_zones : [
+        for as_key, as in try(lz.spoke_vnet.ipv4_address_space, {}) : [
+          for subnet_key, subnet in as.subnets : [
+            for prefix in subnet.subnet_prefixes :
+            can(regex("^/[0-9]{1,2}$", prefix))
+          ]
+        ]
+      ]
+    ]))
+    error_message = "subnet_prefixes must be in format '/XX' (e.g., '/26')."
   }
 }

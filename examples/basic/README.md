@@ -13,11 +13,18 @@ This example demonstrates a complete landing zone setup with:
 
 ## Usage
 
-```bash
-terraform init
-terraform plan
-terraform apply
-```
+1. Copy the example tfvars file and customize with your values:
+   ```bash
+   cp terraform.tfvars.example terraform.tfvars
+   # Edit terraform.tfvars with your specific values
+   ```
+
+2. Initialize and apply:
+   ```bash
+   terraform init
+   terraform plan
+   terraform apply
+   ```
 
 ## Outputs
 
@@ -49,7 +56,15 @@ No resources.
 
 ## Inputs
 
-No inputs.
+| Name | Description | Type | Default | Required |
+|------|-------------|------|---------|:--------:|
+| <a name="input_azure_address_space"></a> [azure\_address\_space](#input\_azure\_address\_space) | The base address space to use for IP address automation in CIDR notation. | `string` | n/a | yes |
+| <a name="input_github_organization"></a> [github\_organization](#input\_github\_organization) | The GitHub organization name for federated credentials. | `string` | `null` | no |
+| <a name="input_hub_network_resource_id"></a> [hub\_network\_resource\_id](#input\_hub\_network\_resource\_id) | The Azure resource ID of the hub virtual network for peering. | `string` | `null` | no |
+| <a name="input_landing_zones"></a> [landing\_zones](#input\_landing\_zones) | Map of landing zones to create with their configurations. | <pre>map(object({<br/>    workload                     = string<br/>    env                          = string<br/>    team                         = string<br/>    location                     = string<br/>    subscription_devtest_enabled = optional(bool, false)<br/>    subscription_tags            = optional(map(string), {})<br/>    dns_servers                  = optional(list(string), [])<br/>    spoke_vnet = optional(object({<br/>      ipv4_address_space = map(object({<br/>        address_space_cidr = string<br/>        subnets = map(object({<br/>          subnet_prefixes = list(string)<br/>        }))<br/>      }))<br/>    }))<br/>    budget = optional(object({<br/>      monthly_amount             = number<br/>      alert_threshold_percentage = number<br/>      alert_contact_emails       = list(string)<br/>    }))<br/>    federated_credentials_github = optional(object({<br/>      repository = string<br/>    }))<br/>  }))</pre> | n/a | yes |
+| <a name="input_subscription_billing_scope"></a> [subscription\_billing\_scope](#input\_subscription\_billing\_scope) | The billing scope for all subscription aliases created by this module. | `string` | n/a | yes |
+| <a name="input_subscription_management_group_id"></a> [subscription\_management\_group\_id](#input\_subscription\_management\_group\_id) | The management group ID to associate all subscriptions with. | `string` | n/a | yes |
+| <a name="input_tags"></a> [tags](#input\_tags) | Common tags to apply to all resources. | `map(string)` | `{}` | no |
 
 ## Outputs
 
