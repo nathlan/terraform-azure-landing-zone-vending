@@ -1,295 +1,141 @@
-# Location
-variable "location" {
-  type        = string
-  description = "The default location of resources created by this module. Virtual networks will be created in this location unless overridden."
-}
-
-# Core subscription configuration
-variable "subscription_alias_enabled" {
-  type        = bool
-  description = "Whether to create a new subscription using the alias API."
-  default     = false
-}
+# ========================================
+# Common Configuration
+# ========================================
 
 variable "subscription_billing_scope" {
   type        = string
-  description = "The billing scope to use when creating the subscription alias. Only required when subscription_alias_enabled is true."
-  default     = null
-}
-
-variable "subscription_display_name" {
-  type        = string
-  description = "The display name for the subscription."
-  default     = null
-}
-
-variable "subscription_alias_name" {
-  type        = string
-  description = "The name of the subscription alias."
-  default     = null
-}
-
-variable "subscription_workload" {
-  type        = string
-  description = "The workload type for the subscription. Valid values are 'Production' and 'DevTest'."
-  default     = null
-
-  validation {
-    condition     = var.subscription_workload == null || contains(["Production", "DevTest"], var.subscription_workload)
-    error_message = "subscription_workload must be either 'Production' or 'DevTest'."
-  }
+  description = "The billing scope for all subscription aliases created by this module. Required for creating new subscriptions."
 }
 
 variable "subscription_management_group_id" {
   type        = string
-  description = "The management group ID to place the subscription in."
-  default     = null
+  description = "The management group ID to associate all subscriptions with."
 }
 
-variable "subscription_tags" {
-  type        = map(string)
-  description = "Tags to apply to the subscription."
-  default     = {}
-}
-
-variable "subscription_management_group_association_enabled" {
-  type        = bool
-  description = "Whether to associate the subscription with a management group."
-  default     = false
-}
-
-# Resource group configuration
-variable "resource_group_creation_enabled" {
-  type        = bool
-  description = "Whether to create resource groups."
-  default     = false
-}
-
-variable "resource_groups" {
-  type = map(object({
-    name     = string
-    location = optional(string)
-    tags     = optional(map(string), {})
-  }))
-  description = "Map of resource groups to create."
-  default     = {}
-}
-
-# Role assignment configuration
-variable "role_assignment_enabled" {
-  type        = bool
-  description = "Whether to create role assignments for the subscription."
-  default     = false
-}
-
-variable "role_assignments" {
-  type = map(object({
-    principal_id                     = string
-    definition                       = string
-    relative_scope                   = string
-    condition                        = optional(string)
-    condition_version                = optional(string)
-    description                      = optional(string)
-    principal_type                   = optional(string)
-    skip_service_principal_aad_check = optional(bool, false)
-  }))
-  description = "Map of role assignments to create for the subscription."
-  default     = {}
-}
-
-# IP Address Automation configuration
-variable "ip_address_automation_enabled" {
-  type        = bool
-  description = "Enable automatic IP address space calculation for virtual networks. When enabled, address spaces will be automatically calculated from the base address space unless explicitly provided in virtual_networks."
-  default     = false
-}
-
-variable "ip_address_automation_address_space" {
+variable "hub_network_resource_id" {
   type        = string
-  description = "The base address space to use for automatic IP address calculation in CIDR notation (e.g., '10.100.0.0/16'). Only used when ip_address_automation_enabled is true."
+  description = "The Azure resource ID of the hub virtual network for peering."
   default     = null
+}
+
+variable "github_organization" {
+  type        = string
+  description = "The GitHub organization name for federated credentials."
+  default     = null
+}
+
+variable "base_address_space" {
+  type        = string
+  description = "The base address space to use for IP address automation in CIDR notation (e.g., '10.100.0.0/16'). Required for automatic address space calculation."
 
   validation {
-    condition     = var.ip_address_automation_address_space == null || can(regex("^([0-9]{1,3}\\.){3}[0-9]{1,3}/[0-9]{1,2}$", var.ip_address_automation_address_space))
-    error_message = "ip_address_automation_address_space must be a valid CIDR notation (e.g., '10.100.0.0/16')."
+    condition     = can(regex("^([0-9]{1,3}\\.){3}[0-9]{1,3}/[0-9]{1,2}$", var.base_address_space))
+    error_message = "base_address_space must be a valid CIDR notation (e.g., '10.100.0.0/16')."
   }
 }
 
-variable "ip_address_automation_vnet_prefix_sizes" {
-  type        = map(number)
-  description = <<-EOT
-    Map of virtual network keys to their desired prefix sizes for automatic IP address calculation.
-    The keys must match the keys in var.virtual_networks. The values are the CIDR prefix lengths (e.g., 24 for /24).
-    Only used when ip_address_automation_enabled is true.
-
-    Example:
-    {
-      "vnet1" = 24  # /24 = 256 addresses
-      "vnet2" = 26  # /26 = 64 addresses
-      "vnet3" = 25  # /25 = 128 addresses
-    }
-  EOT
-  default     = {}
-
-  validation {
-    condition     = alltrue([for size in values(var.ip_address_automation_vnet_prefix_sizes) : size >= 8 && size <= 30])
-    error_message = "All prefix sizes must be between 8 and 30."
-  }
-}
-
-# Virtual network configuration
-variable "virtual_network_enabled" {
-  type        = bool
-  description = "Whether to create virtual networks."
-  default     = false
-}
-
-variable "virtual_networks" {
-  type = map(object({
-    name                    = string
-    address_space           = optional(list(string))
-    resource_group_key      = string
-    location                = optional(string)
-    dns_servers             = optional(list(string), [])
-    ddos_protection_plan_id = optional(string)
-    hub_network_resource_id = optional(string)
-    hub_peering_enabled     = optional(bool, false)
-    mesh_peering_enabled    = optional(bool, false)
-    tags                    = optional(map(string), {})
-  }))
-  description = <<-EOT
-    Map of virtual networks to create.
-
-    When ip_address_automation_enabled is true:
-    - address_space is optional and will be automatically calculated if not provided
-    - The map keys must match the keys in var.ip_address_automation_vnet_prefix_sizes for automatic calculation
-
-    When ip_address_automation_enabled is false:
-    - address_space is required
-  EOT
+variable "tags" {
+  type        = map(string)
+  description = "Common tags to apply to all resources."
   default     = {}
 }
 
-# User-Managed Identity configuration
-variable "umi_enabled" {
-  type        = bool
-  description = "Whether to enable the creation of user-assigned managed identities. Requires user_managed_identities to be configured."
-  default     = false
-}
-
-variable "user_managed_identities" {
-  type = map(object({
-    name                         = string
-    resource_group_key           = optional(string)
-    resource_group_name_existing = optional(string)
-    location                     = optional(string)
-    tags                         = optional(map(string), {})
-    role_assignments = optional(map(object({
-      definition                = string
-      relative_scope            = optional(string, "")
-      resource_group_scope_key  = optional(string)
-      condition                 = optional(string)
-      condition_version         = optional(string)
-      principal_type            = optional(string)
-      definition_lookup_enabled = optional(bool, false)
-      use_random_uuid           = optional(bool, false)
-    })), {})
-    federated_credentials_github = optional(map(object({
-      name            = optional(string)
-      organization    = string
-      repository      = string
-      entity          = string
-      enterprise_slug = optional(string)
-      value           = optional(string)
-    })), {})
-    federated_credentials_terraform_cloud = optional(map(object({
-      name         = optional(string)
-      organization = string
-      project      = string
-      workspace    = string
-      run_phase    = string
-    })), {})
-    federated_credentials_advanced = optional(map(object({
-      name               = string
-      subject_identifier = string
-      issuer_url         = string
-      audiences          = optional(set(string), ["api://AzureADTokenExchange"])
-    })), {})
-  }))
-  description = <<-EOT
-    Map of user-managed identities to create. The map key must be known at plan time.
-
-    Required fields:
-    - name: The name of the user-assigned managed identity
-    - One of resource_group_key (for RGs created in this module) or resource_group_name_existing (for existing RGs)
-
-    Optional fields:
-    - location: Location of the identity (defaults to module location)
-    - tags: Tags to apply to the identity
-    - role_assignments: Role assignments for the identity
-    - federated_credentials_github: GitHub OIDC federated credentials
-    - federated_credentials_terraform_cloud: Terraform Cloud federated credentials
-    - federated_credentials_advanced: Advanced federated credentials configuration
-  EOT
-  default     = {}
-}
-
-# Budget configuration
-variable "budget_enabled" {
-  type        = bool
-  description = "Whether to create budgets. If enabled, supply the list of budgets in var.budgets."
-  default     = false
-}
-
-variable "budgets" {
-  type = map(object({
-    name               = string
-    amount             = number
-    time_grain         = string
-    time_period_start  = string
-    time_period_end    = string
-    relative_scope     = optional(string, "")
-    resource_group_key = optional(string)
-    notifications = optional(map(object({
-      enabled        = bool
-      operator       = string
-      threshold      = number
-      threshold_type = optional(string, "Actual")
-      contact_emails = optional(list(string), [])
-      contact_roles  = optional(list(string), [])
-      contact_groups = optional(list(string), [])
-      locale         = optional(string, "en-us")
-    })), {})
-  }))
-  description = <<-EOT
-    Map of budgets to create for the subscription.
-
-    Required fields:
-    - name: The name of the budget
-    - amount: The total amount of cost to track with the budget
-    - time_grain: The time grain for the budget (Annually, BillingAnnual, BillingMonth, BillingQuarter, Monthly, or Quarterly)
-    - time_period_start: The start date for the budget (RFC3339 format, e.g. 2024-01-01T00:00:00Z)
-    - time_period_end: The end date for the budget (RFC3339 format)
-
-    Optional fields:
-    - relative_scope: Scope relative to the created subscription (empty for subscription scope)
-    - resource_group_key: Key of the resource group (if created in this module)
-    - notifications: Map of notifications with:
-      - enabled: Whether the notification is enabled
-      - operator: The operator (GreaterThan or GreaterThanOrEqualTo)
-      - threshold: The threshold (0-1000)
-      - threshold_type: Actual or Forecasted
-      - contact_emails: List of contact emails
-      - contact_roles: List of contact roles
-      - contact_groups: List of contact groups
-      - locale: The locale (e.g. en-us)
-  EOT
-  default     = {}
-}
-
-# Telemetry configuration
 variable "enable_telemetry" {
   type        = bool
-  description = "Enable telemetry via a customer usage attribution tag. This allows Microsoft to track usage of this module."
+  description = "Enable telemetry via a customer usage attribution tag."
   default     = true
+}
+
+# ========================================
+# Landing Zones Configuration
+# ========================================
+
+variable "landing_zones" {
+  type = map(object({
+    # Core Identity
+    workload = string
+    env      = string
+    team     = string
+    location = string
+
+    # Optional: Subscription Configuration
+    subscription_devtest_enabled = optional(bool, false)
+    subscription_tags            = optional(map(string), {})
+
+    # Optional: Networking Configuration
+    address_space_required = optional(string)
+    hub_peering_enabled    = optional(bool, true)
+    dns_servers            = optional(list(string), [])
+    subnets = optional(map(object({
+      name          = optional(string)
+      subnet_prefix = string
+    })), {})
+
+    # Optional: Budget Configuration
+    budgets = optional(object({
+      amount         = number
+      threshold      = number
+      contact_emails = list(string)
+    }))
+
+    # Optional: Federated Credentials
+    federated_credentials_github = optional(object({
+      repository = string
+    }))
+  }))
+
+  description = <<-EOT
+    Map of landing zones to create. Each landing zone is a complete Azure subscription with virtual network, identity, and optional budgets.
+
+    Required fields:
+    - workload: Short identifier for the workload (e.g., 'example-api')
+    - env: Environment (must be 'dev', 'test', or 'prod')
+    - team: Owning team name
+    - location: Azure region (e.g., 'australiaeast')
+
+    Optional fields:
+    - subscription_devtest_enabled: Create as DevTest subscription (default: false = Production)
+    - subscription_tags: Additional tags for the subscription (merged with auto-generated tags)
+    - address_space_required: VNet prefix size (e.g., '/24') - omit to skip VNet creation
+    - hub_peering_enabled: Enable peering to hub VNet (default: true)
+    - dns_servers: Custom DNS servers for VNet
+    - subnets: Map of subnets with subnet_prefix (e.g., '/26')
+    - budgets: Budget configuration with amount, threshold, and contact_emails
+    - federated_credentials_github: GitHub OIDC config with repository name
+
+    Example:
+    landing_zones = {
+      example-api-prod = {
+        workload = "example-api"
+        env      = "prod"
+        team     = "app-engineering"
+        location = "australiaeast"
+        address_space_required = "/24"
+        subnets = {
+          default = { subnet_prefix = "/26" }
+        }
+        budgets = {
+          amount         = 500
+          threshold      = 80
+          contact_emails = ["team@example.com"]
+        }
+      }
+    }
+  EOT
+
+  validation {
+    condition = alltrue([
+      for lz_key, lz in var.landing_zones :
+      contains(["dev", "test", "prod"], lz.env)
+    ])
+    error_message = "Each landing zone 'env' must be 'dev', 'test', or 'prod'."
+  }
+
+  validation {
+    condition = alltrue([
+      for lz_key, lz in var.landing_zones :
+      lz.address_space_required == null || can(regex("^/[0-9]{1,2}$", lz.address_space_required))
+    ])
+    error_message = "address_space_required must be in format '/XX' (e.g., '/24')."
+  }
 }

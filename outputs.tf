@@ -1,74 +1,83 @@
-output "subscription_id" {
-  description = "The ID of the subscription."
-  value       = module.landing_zone_vending.subscription_id
+# Landing Zone Outputs
+
+output "subscription_ids" {
+  description = "Map of landing zone keys to their subscription IDs."
+  value = {
+    for lz_key, lz in module.landing_zone_vending :
+    lz_key => lz.subscription_id
+  }
 }
 
-output "subscription_resource_id" {
-  description = "The resource ID of the subscription."
-  value       = module.landing_zone_vending.subscription_resource_id
+output "subscription_resource_ids" {
+  description = "Map of landing zone keys to their subscription resource IDs."
+  value = {
+    for lz_key, lz in module.landing_zone_vending :
+    lz_key => lz.subscription_resource_id
+  }
 }
 
 output "resource_group_resource_ids" {
-  description = "Map of resource group names to their resource IDs."
-  value       = module.landing_zone_vending.resource_group_resource_ids
+  description = "Map of landing zone keys to their resource group resource IDs."
+  value = {
+    for lz_key, lz in module.landing_zone_vending :
+    lz_key => lz.resource_group_resource_ids
+  }
 }
 
 output "virtual_network_resource_ids" {
-  description = "Map of virtual network names to their resource IDs."
-  value       = module.landing_zone_vending.virtual_network_resource_ids
+  description = "Map of landing zone keys to their virtual network resource IDs."
+  value = {
+    for lz_key, lz in module.landing_zone_vending :
+    lz_key => lz.virtual_network_resource_ids
+  }
 }
 
-output "route_table_resource_ids" {
-  description = "Map of route table names to their resource IDs."
-  value       = module.landing_zone_vending.route_table_resource_ids
-}
-
-output "management_group_subscription_association_id" {
-  description = "The ID of the management group subscription association."
-  value       = module.landing_zone_vending.management_group_subscription_association_id
-}
-
-# User-Managed Identity outputs
 output "umi_client_ids" {
-  description = "The client IDs of the user-managed identities. Value will be null if var.umi_enabled is false."
-  value       = module.landing_zone_vending.umi_client_ids
+  description = "Map of landing zone keys to their UMI client IDs."
+  value = {
+    for lz_key, lz in module.landing_zone_vending :
+    lz_key => lz.umi_client_ids
+  }
 }
 
 output "umi_principal_ids" {
-  description = "The principal IDs (object IDs) of the user-managed identities. Value will be null if var.umi_enabled is false."
-  value       = module.landing_zone_vending.umi_principal_ids
+  description = "Map of landing zone keys to their UMI principal IDs (object IDs)."
+  value = {
+    for lz_key, lz in module.landing_zone_vending :
+    lz_key => lz.umi_principal_ids
+  }
 }
 
 output "umi_resource_ids" {
-  description = "The Azure resource IDs of the user-managed identities. Value will be null if var.umi_enabled is false."
-  value       = module.landing_zone_vending.umi_resource_ids
-}
-
-output "umi_tenant_ids" {
-  description = "The tenant IDs of the user-managed identities. Value will be null if var.umi_enabled is false."
-  value       = module.landing_zone_vending.umi_tenant_ids
-}
-
-# Budget outputs
-output "budget_resource_ids" {
-  description = "The created budget resource IDs, expressed as a map."
-  value       = module.landing_zone_vending.budget_resource_id
-}
-
-# IP Address Automation outputs
-output "calculated_address_prefixes" {
-  description = "The automatically calculated address prefixes for virtual networks when ip_address_automation_enabled is true. Returns null if automation is disabled."
-  value       = var.ip_address_automation_enabled ? module.ip_addresses[0].address_prefixes : null
-}
-
-output "calculated_address_prefixes_with_details" {
-  description = "The automatically calculated address prefixes with details when ip_address_automation_enabled is true. Returns null if automation is disabled."
-  value       = var.ip_address_automation_enabled ? module.ip_addresses[0].address_prefixes_with_details : null
-}
-
-output "virtual_networks_address_spaces" {
-  description = "Map of virtual network keys to their final address spaces (either calculated or explicitly provided)."
+  description = "Map of landing zone keys to their UMI resource IDs."
   value = {
-    for key, vnet in local.virtual_networks_with_addresses : key => vnet.address_space
+    for lz_key, lz in module.landing_zone_vending :
+    lz_key => lz.umi_resource_ids
   }
+}
+
+output "budget_resource_ids" {
+  description = "Map of landing zone keys to their budget resource IDs."
+  value = {
+    for lz_key, lz in module.landing_zone_vending :
+    lz_key => lz.budget_resource_id
+  }
+}
+
+output "calculated_address_prefixes" {
+  description = "The automatically calculated address prefixes for virtual networks."
+  value       = length(local.vnet_prefix_sizes) > 0 ? module.ip_addresses[0].address_prefixes : null
+}
+
+output "virtual_network_address_spaces" {
+  description = "Map of landing zone keys to their virtual network address spaces."
+  value = {
+    for lz_key, lz in local.virtual_networks :
+    lz_key => lz != null ? lz.address_space : null
+  }
+}
+
+output "landing_zone_names" {
+  description = "Map of landing zone keys to their auto-generated subscription names."
+  value       = local.subscription_names
 }
