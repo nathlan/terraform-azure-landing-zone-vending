@@ -75,7 +75,7 @@ variable "landing_zones" {
 
     # Optional: Budget Configuration
     budget = optional(object({
-      monthly_amount             = number
+      monthly_amount             = optional(number, 1000)
       alert_threshold_percentage = number
       alert_contact_emails       = list(string)
     }))
@@ -104,7 +104,7 @@ variable "landing_zones" {
         - address_space_cidr: Prefix size (e.g., '/24')
         - subnets: Map of subnets, each with:
           - subnet_prefixes: List of subnet prefix sizes (e.g., ['/26', '/28'])
-    - budget: Budget configuration with monthly_amount, alert_threshold_percentage, and alert_contact_emails
+    - budget: Budget configuration with optional monthly_amount (default: 1000), alert_threshold_percentage, and alert_contact_emails
     - federated_credentials_github: GitHub OIDC config with repository name
 
     Example:
@@ -127,7 +127,7 @@ variable "landing_zones" {
           }
         }
         budget = {
-          monthly_amount             = 500
+          monthly_amount             = 1000
           alert_threshold_percentage = 80
           alert_contact_emails       = ["team@example.com"]
         }
