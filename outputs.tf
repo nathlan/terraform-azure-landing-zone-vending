@@ -56,6 +56,22 @@ output "umi_resource_ids" {
   }
 }
 
+output "tfplan_client_ids" {
+  description = "Map of landing zone keys to their Terraform plan UMI client IDs (id-<workload>-<env>-<workload>-tfplan, Reader role)."
+  value = {
+    for lz_key, lz in module.landing_zone_vending :
+    lz_key => lz.umi_client_ids["plan"]
+  }
+}
+
+output "tfapply_client_ids" {
+  description = "Map of landing zone keys to their Terraform apply UMI client IDs (id-<workload>-<env>-<workload>-tfapply, Owner role)."
+  value = {
+    for lz_key, lz in module.landing_zone_vending :
+    lz_key => lz.umi_client_ids["apply"]
+  }
+}
+
 output "budget_resource_ids" {
   description = "Map of landing zone keys to their budget resource IDs."
   value = {

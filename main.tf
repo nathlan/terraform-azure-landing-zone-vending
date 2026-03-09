@@ -78,7 +78,7 @@ locals {
   vnet_prefix_sizes = merge([
     for lz_key, lz in var.landing_zones : {
       for as_key, as in try(lz.spoke_vnet.ipv4_address_spaces, {}) :
-      "${lz_key}_${as_key}" => tonumber(trimprefix(as.address_space_cidr, "/"))
+      "${lz_key}_${as_key}" => tonumber(trimprefix(as.vnet_address_space_prefix, "/"))
     }
   ]...)
 }
@@ -159,7 +159,7 @@ module "landing_zone_vending" {
   subscription_billing_scope                        = var.subscription_billing_scope
   subscription_display_name                         = local.subscription_names[each.key]
   subscription_alias_name                           = local.subscription_names[each.key]
-  subscription_workload                             = each.value.subscription_devtest_enabled ? "DevTest" : "Production"
+  subscription_workload                             = var.subscription_devtest_supported && contains(["dev", "test"], each.value.env) ? "DevTest" : "Production"
   subscription_management_group_id                  = var.subscription_management_group_id
   subscription_management_group_association_enabled = true
   subscription_tags                                 = local.merged_tags[each.key]
@@ -199,7 +199,7 @@ module "landing_zone_vending" {
   umi_enabled = true
   user_managed_identities = {
     plan = {
-      name               = "${module.naming[each.key].user_assigned_identity.name}-plan"
+      name               = "${module.naming[each.key].user_assigned_identity.name}-${each.value.workload}-tfplan"
       resource_group_key = "rg_identity"
       location           = each.value.location
       tags               = local.merged_tags[each.key]
@@ -221,8 +221,8 @@ module "landing_zone_vending" {
       } : {}
     }
 
-    deploy = {
-      name               = "${module.naming[each.key].user_assigned_identity.name}-deploy"
+    apply = {
+      name               = "${module.naming[each.key].user_assigned_identity.name}-${each.value.workload}-tfapply"
       resource_group_key = "rg_identity"
       location           = each.value.location
       tags               = local.merged_tags[each.key]
@@ -235,7 +235,7 @@ module "landing_zone_vending" {
       }
 
       federated_credentials_github = each.value.federated_credentials_github != null ? {
-        deploy = {
+        apply = {
           organization = var.github_organization
           repository   = each.value.federated_credentials_github.repository
           entity       = "branch"

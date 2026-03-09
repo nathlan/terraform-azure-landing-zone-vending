@@ -35,22 +35,27 @@ variable "tags" {
   default     = {}
 }
 
+variable "subscription_devtest_supported" {
+  type        = bool
+  description = "Whether DevTest subscriptions are supported."
+  default     = false
+}
+
 # ========================================
 # Landing Zones Configuration
 # ========================================
 
 variable "landing_zones" {
   type = map(object({
-    workload                     = string
-    env                          = string
-    team                         = string
-    location                     = string
-    subscription_devtest_enabled = optional(bool, false)
-    subscription_tags            = optional(map(string), {})
-    dns_servers                  = optional(list(string), [])
+    workload          = string
+    env               = string
+    team              = string
+    location          = string
+    subscription_tags = optional(map(string), {})
+    dns_servers       = optional(list(string), [])
     spoke_vnet = optional(object({
       ipv4_address_spaces = map(object({
-        address_space_cidr = string
+        vnet_address_space_prefix = string
         subnets = map(object({
           subnet_prefixes = list(string)
         }))
