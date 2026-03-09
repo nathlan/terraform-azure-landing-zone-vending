@@ -17,6 +17,7 @@ module "landing_zones" {
   hub_network_resource_id          = var.hub_network_resource_id
   github_organization              = var.github_organization
   azure_address_space              = var.azure_address_space
+  subscription_devtest_supported   = var.subscription_devtest_supported
   tags                             = var.tags
 
   # Map of multiple landing zones to deploy in this single module call
@@ -43,6 +44,16 @@ output "virtual_network_resource_ids" {
 output "umi_client_ids" {
   description = "User-managed identity client IDs"
   value       = module.landing_zones.umi_client_ids
+}
+
+output "tfplan_client_ids" {
+  description = "Terraform plan UMI client IDs (Reader role)"
+  value       = module.landing_zones.tfplan_client_ids
+}
+
+output "tfapply_client_ids" {
+  description = "Terraform apply UMI client IDs (Owner role)"
+  value       = module.landing_zones.tfapply_client_ids
 }
 
 output "calculated_address_prefixes" {

@@ -7,6 +7,7 @@ subscription_management_group_id = "Corp"
 hub_network_resource_id          = "/subscriptions/xxx/resourceGroups/rg-hub/providers/Microsoft.Network/virtualNetworks/vnet-hub"
 github_organization              = "yourorg"
 azure_address_space              = "10.100.0.0/16"
+subscription_devtest_supported   = true
 
 tags = {
   managed_by       = "terraform"
@@ -34,9 +35,9 @@ landing_zones = {
 
     # New nested spoke_vnet structure with multiple address spaces
     spoke_vnet = {
-      ipv4_address_space = {
+      ipv4_address_spaces = {
         default_address_space = {
-          address_space_cidr = "/23"
+          vnet_address_space_prefix = "/23"
           subnets = {
             workload = {
               subnet_prefixes = ["/27", "/26"]
@@ -47,7 +48,7 @@ landing_zones = {
           }
         }
         secondary_address_space = {
-          address_space_cidr = "/24"
+          vnet_address_space_prefix = "/24"
           subnets = {
             api = {
               subnet_prefixes = ["/25"]
@@ -75,16 +76,15 @@ landing_zones = {
     team     = "web-engineering"
     location = "australiacentral"
 
-    subscription_devtest_enabled = true
     subscription_tags = {
       cost_centre = "IT-DEV-001"
     }
 
     # Simpler spoke_vnet with single address space
     spoke_vnet = {
-      ipv4_address_space = {
+      ipv4_address_spaces = {
         default_address_space = {
-          address_space_cidr = "/25"
+          vnet_address_space_prefix = "/25"
           subnets = {
             default = {
               subnet_prefixes = ["/27"]
